@@ -41,6 +41,7 @@ export default class Run extends BaseCommand<typeof Run> {
     public async run(): Promise<void> {
         const { flags } = await this.parse(Run);
         let projectName: string;
+        let lambada = this.isLambada();
 
         if (flags["no-backend"]) {
             projectName = "cartesi-node";
@@ -53,7 +54,7 @@ export default class Run extends BaseCommand<typeof Run> {
                     `Cartesi machine snapshot not found, run '${this.config.bin} build'`,
                 );
             }
-            projectName = hash.substring(2, 10);
+            projectName = (lambada ? "lambada-" : "") + hash.substring(2, 10);
         }
 
         // path of the tool instalation
@@ -83,37 +84,50 @@ export default class Run extends BaseCommand<typeof Run> {
             CARTESI_LISTEN_PORT: listenPort.toString(),
         };
 
-        // validator
-        const composeFiles = ["docker-compose-validator.yaml"];
+        const composeFiles = [];
 
-        // prompt
-        composeFiles.push("docker-compose-prompt.yaml");
+        if (!lambada) {
+            composeFiles.push("docker-compose-validator.yaml");
 
-        // database
-        composeFiles.push("docker-compose-database.yaml");
+            // database
+            composeFiles.push("docker-compose-database.yaml");
 
-        // proxy
-        composeFiles.push("docker-compose-proxy.yaml");
+            // proxy
+            composeFiles.push("docker-compose-proxy.yaml");
 
-        // anvil
-        composeFiles.push("docker-compose-anvil.yaml");
+            // anvil
+            composeFiles.push("docker-compose-anvil.yaml");
 
-        // explorer
-        composeFiles.push("docker-compose-explorer.yaml");
+            // explorer
+            composeFiles.push("docker-compose-explorer.yaml");
 
-        // load the no-backend compose file
-        if (flags["no-backend"]) {
-            composeFiles.push("docker-compose-host.yaml");
+            // load the no-backend compose file
+            if (flags["no-backend"]) {
+                composeFiles.push("docker-compose-host.yaml");
+            } else {
+                // snapshot volume
+                composeFiles.push("docker-compose-snapshot-volume.yaml");
+            }
+
+            // add project env file loading
+            if (fs.existsSync("./.cartesi.env")) {
+                composeFiles.push("docker-compose-envfile.yaml");
+            }
         } else {
-            // snapshot volume
-            composeFiles.push("docker-compose-snapshot-volume.yaml");
-        }
+            env["AUTOMATIC_SUBSCRIBE"] = this.getLambadaCid();
 
-        // add project env file loading
-        if (fs.existsSync("./.cartesi.env")) {
-            composeFiles.push("docker-compose-envfile.yaml");
-        }
+            // lambada
+            composeFiles.push("docker-compose-lambada.yaml");
 
+            composeFiles.push("docker-compose-snapshot-volume-lambada.yaml");
+
+            // anvil
+            composeFiles.push("docker-compose-anvil.yaml");
+
+            // prompt
+            composeFiles.push("docker-compose-prompt.yaml");
+        }
+        // validator
         // create the "--file <file>" list
         const files = composeFiles
             .map((f) => ["--file", path.join(binPath, "node", f)])

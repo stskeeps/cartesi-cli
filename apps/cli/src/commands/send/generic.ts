@@ -1,4 +1,5 @@
 import { Flags } from "@oclif/core";
+import fs from "fs";
 import {
     Address,
     PublicClient,
@@ -123,19 +124,36 @@ export default class SendGeneric extends SendBaseCommand<typeof SendGeneric> {
         publicClient: PublicClient,
         walletClient: WalletClient,
     ): Promise<Address> {
-        // get dapp address from local node, or ask
-        const applicationAddress = await super.getApplicationAddress();
+        if (fs.existsSync(".cartesi/image/.lambada")) {
+            const payload =
+                (await this.getInput()) ||
+                (await bytesInput({ message: "Input" }));
+            if (!walletClient.account) {
+                throw new Error("Missing account");
+            }
+            const hash = await walletClient.sendTransaction({
+                account: walletClient.account.address,
+                chain: walletClient.chain,
+                to: "0xfF00000000000000000000000000000000000020",
+                data: payload,
+            });
+            return hash;
+        } else {
+            // get dapp address from local node, or ask
+            const applicationAddress = await super.getApplicationAddress();
 
-        const payload =
-            (await this.getInput()) || (await bytesInput({ message: "Input" }));
-        const { request } = await publicClient.simulateContract({
-            address: inputBoxAddress,
-            abi: inputBoxAbi,
-            functionName: "addInput",
-            args: [applicationAddress, payload],
-            account: walletClient.account,
-        });
+            const payload =
+                (await this.getInput()) ||
+                (await bytesInput({ message: "Input" }));
+            const { request } = await publicClient.simulateContract({
+                address: inputBoxAddress,
+                abi: inputBoxAbi,
+                functionName: "addInput",
+                args: [applicationAddress, payload],
+                account: walletClient.account,
+            });
 
-        return walletClient.writeContract(request);
+            return walletClient.writeContract(request);
+        }
     }
 }

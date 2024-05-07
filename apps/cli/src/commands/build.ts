@@ -19,6 +19,7 @@ type ImageInfo = {
     env: string[];
     ramSize: string;
     sdkVersion: string;
+    sdkType: string;
     workdir: string;
 };
 
@@ -28,6 +29,7 @@ const CARTESI_LABEL_DATA_SIZE = `${CARTESI_LABEL_PREFIX}.data_size`;
 const CARTESI_DEFAULT_RAM_SIZE = "128Mi";
 
 const CARTESI_LABEL_SDK_VERSION = `${CARTESI_LABEL_PREFIX}.sdk_version`;
+const CARTESI_LABEL_SDK = `${CARTESI_LABEL_PREFIX}.sdk`;
 const CARTESI_DEFAULT_SDK_VERSION = "0.6.0";
 
 export default class BuildApplication extends BaseCommand<
@@ -102,6 +104,7 @@ export default class BuildApplication extends BaseCommand<
             sdkVersion:
                 labels[CARTESI_LABEL_SDK_VERSION] ??
                 CARTESI_DEFAULT_SDK_VERSION,
+            sdkType: labels[CARTESI_LABEL_SDK] ?? "cartesi/sdk",
             workdir: imageInfo["Config"]["WorkingDir"],
         };
 
@@ -242,8 +245,7 @@ Update your application Dockerfile using one of the templates at https://github.
         // command to change working directory if WORKDIR is defined
         const cwd = info.workdir ? `--append-init=WORKDIR=${info.workdir}` : "";
         return [
-            "cartesi-machine",
-            "--assert-rolling-template",
+            "create_machine_snapshot",
             `--ram-length=${ramSize}`,
             `--flash-drive=label:${driveLabel},filename:/tmp/input`,
             "--final-hash",

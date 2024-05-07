@@ -5,12 +5,12 @@ target "default" {
   inherits = ["docker-metadata-action", "docker-platforms"]
   args = {
     BASE_IMAGE                    = "debian:bookworm-20240311"
-    SERVER_MANAGER_REGISTRY       = "docker.io"
-    SERVER_MANAGER_ORG            = "cartesi"
-    SERVER_MANAGER_VERSION        = "0.9.1"
-    CARTESI_IMAGE_KERNEL_VERSION  = "0.19.1"
+    SERVER_MANAGER_REGISTRY       = "ghcr.io"
+    SERVER_MANAGER_ORG            = "zippiehq/cartesi-lambada"
+    SERVER_MANAGER_VERSION        = "latest"
+    CARTESI_IMAGE_KERNEL_VERSION  = "0.20.0"
     DEVNET_VERSION                = "1.6.0"
-    LINUX_KERNEL_VERSION          = "6.5.9-ctsi-1-v0.19.1"
+    LINUX_KERNEL_VERSION          = "6.5.13-ctsi-1-v0.20.0"
     XGENEXT2_VERSION              = "1.5.6"
   }
 }

@@ -61,6 +61,16 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
         return path.join(".cartesi", ...paths);
     }
 
+    protected isLambada(): boolean {
+        const hashPath = this.getContextPath("image", ".lambada");
+        return fs.existsSync(hashPath);
+    }
+    
+    protected getLambadaCid(): string {
+        const cidPath = this.getContextPath("image", "sample.car.cid");
+        return fs.readFileSync(cidPath).toString("utf8").trim();
+    }
+
     protected getMachineHash(): Hash | undefined {
         // read hash of the cartesi machine snapshot, if one exists
         const hashPath = this.getContextPath("image", "hash");

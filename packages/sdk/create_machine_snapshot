@@ -1,0 +1,20 @@
+#!/bin/bash
+echo "Creating cartesi machine snapshot .."
+cartesi-machine --max-mcycle=0 "$@" --store=/tmp/machine-store
+mkdir -p /tmp/output
+ipfs init
+ipfs add --cid-version=1 --raw-leaves=false -r -Q /tmp/machine-store > /tmp/cid 
+mkdir -p /tmp/sample-app/gov/app
+printf '{"base_image_cid":"%s"}' `cat /tmp/cid` > /tmp/sample-app/gov/app/info.json
+# because of anvil snapshot
+printf '{"sequencer":{"type":"evm-da","height":"23","vm-id":"0xFF00000000000000000000000000000000000020"}}' > /tmp/sample-app/gov/chain-info.json
+
+ipfs add --cid-version=1 -r -Q /tmp/sample-app > /tmp/cid.sample
+
+ipfs dag export `cat /tmp/cid` > /tmp/output/machine.car
+ipfs dag export `cat /tmp/cid.sample` > /tmp/output/sample.car
+
+mv /tmp/cid /tmp/output/machine.car.cid
+mv /tmp/cid.sample /tmp/output/sample.car.cid
+mv /tmp/machine-store/* /tmp/output/
+touch /tmp/output/.lambada
